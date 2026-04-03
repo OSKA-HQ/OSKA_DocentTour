@@ -223,18 +223,6 @@
                         </div>
                     </div>
 
-                    <!-- 질문 2 -->
-                    <div class="space-y-4">
-                        <p class="text-sm text-zinc-600 font-normal">2. 도슨트 투어가 종료되고 현장 방문 등의 서비스를 통해 조금 더 <strong class="font-bold text-black">디테일한 진행</strong>을 원하시나요?</p>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div onclick="selectBinary('wantFollowUp', '진행을 원함', this, 'q2')" class="option-card q2-opt p-5 flex flex-col items-center text-center">
-                                <span class="text-xs font-normal tracking-wide">진행을 원함</span>
-                            </div>
-                            <div onclick="selectBinary('wantFollowUp', '원하지 않음', this, 'q2')" class="option-card q2-opt p-5 flex flex-col items-center text-center">
-                                <span class="text-xs font-normal tracking-wide">원하지 않음</span>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="flex justify-between items-center pt-6">
@@ -490,6 +478,7 @@
                         <p>작성해주신 연락처를 통해 카달로그 및 당사의 자료가 전송 될 예정입니다.</p>
                         <p class="text-red-500 text-[11px]">※ 타인의 연락처를 무단으로 사용하는 행위는 형사 처벌의 대상이 될 수 있습니다.</p>
                         <p class="pt-2 text-black font-medium">약 1분 내로 받아보실 수 있습니다!</p>
+                        <p class="text-[11px] text-zinc-400 font-normal leading-relaxed mt-1">입력하신 정보를 기반으로 가까운 관할 지사에서 맞춤 안내를 위해 연락드릴 수 있습니다.</p>
                     </div>
                 </div>
                 <div class="space-y-6">
@@ -647,7 +636,7 @@
         let currentStep = 0;
         let selectedMode = 'standard';
         const totalSteps = 9;
-        const selectionData = { seenProduct: '', wantFollowUp: '', spaces: [], purposes: [], scales: [], sizeStr: '', sizeVal: 0, lineup: '', mood: '', regionSido: '', regionSigungu: '', price: 0 };
+        const selectionData = { seenProduct: '', spaces: [], purposes: [], scales: [], sizeStr: '', sizeVal: 0, lineup: '', mood: '', regionSido: '', regionSigungu: '', price: 0 };
 
         const regionData = {
             "서울": ["강남구", "강동구", "강북구", "강서구", "관악구", "광진구", "구로구", "금천구", "노원구", "도봉구", "동대문구", "동작구", "마포구", "서대문구", "서초구", "성동구", "성북구", "송파구", "양천구", "영등포구", "용산구", "은평구", "종로구", "중구", "중랑구"],
@@ -815,7 +804,7 @@
             element.classList.add('active');
         }
 
-        function validateStep00() { if (!selectionData.seenProduct || !selectionData.wantFollowUp) return; nextStep(1); }
+        function validateStep00() { if (!selectionData.seenProduct) return; nextStep(1); }
         function toggleOption(key, value, element) {
             const list = selectionData[key];
             const idx = list.indexOf(value);
@@ -856,8 +845,7 @@
                 lineup_type: selectionData.lineup,
                 mood_type: selectionData.mood,
                 estimated_price: `약 ${selectionData.price.toLocaleString()}만 원 ~`,
-                seen_product: selectionData.seenProduct,
-                want_follow_up: selectionData.wantFollowUp
+                seen_product: selectionData.seenProduct
             };
 
             const ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/26207101/uqxa60n/";
