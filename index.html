@@ -450,7 +450,7 @@
                             <span id="summary-price" class="text-2xl font-normal tracking-tighter">계산 중...</span>
                         </div>
                         <p class="text-[10px] text-red-500 font-normal leading-relaxed text-center whitespace-pre-line">
-                            본 금액은 편의를 위해 산출된 대략적인 예상가입니다.
+                            본 금액은 편의를 위해 산출된 대략적인 최소 예상가입니다.<br>
                             고객님의 환경에 꼭 맞는 정확하고 섬세한 견적을 위해, 빠른 시일 내에 전담 담당자(혹은 각 지역의 지사장)가 직접 연락드려 친절히 안내해 드리겠습니다.
                         </p>
                     </div>
@@ -767,18 +767,106 @@
             setTimeout(() => nextStep(step + 1), 500);
         }
 
+        // 파고라 단가표 (Pivot mm → Span mm → 가격 원)
+        const PERGOLA_PIVOTS = [2600,2775,2950,3125,3300,3475,3650,3825,4000,4175,4350,4525,4700,4875,5050,5225,5400,5575,5750,5925];
+        const PERGOLA_SPANS = [1000,1500,2000,2500,3000,3500,4000];
+        const PERGOLA_PRICES = [
+            [4600000,4900000,5200000,5500000,5800000,6100000,6400000],
+            [4700000,5000000,5300000,5600000,5900000,6200000,6500000],
+            [4800000,5100000,5400000,5700000,6000000,6300000,6600000],
+            [4900000,5200000,5500000,5800000,6100000,6400000,6700000],
+            [5000000,5300000,5600000,5900000,6200000,6500000,6800000],
+            [5100000,5400000,5700000,6000000,6300000,6600000,6900000],
+            [5200000,5500000,5800000,6100000,6400000,6700000,7000000],
+            [5300000,5600000,5900000,6200000,6500000,6800000,7100000],
+            [5400000,5700000,6000000,6300000,6600000,6900000,7200000],
+            [5500000,5800000,6100000,6400000,6700000,7000000,7300000],
+            [5600000,5900000,6200000,6500000,6800000,7100000,7400000],
+            [5700000,6000000,6300000,6600000,6900000,7200000,7500000],
+            [5800000,6100000,6400000,6700000,7000000,7300000,7600000],
+            [5900000,6200000,6500000,6800000,7100000,7400000,7700000],
+            [6000000,6300000,6600000,6900000,7200000,7500000,7800000],
+            [6100000,6400000,6700000,7000000,7300000,7600000,7900000],
+            [6200000,6500000,6800000,7100000,7400000,7700000,8000000],
+            [6300000,6600000,6900000,7200000,7500000,7800000,8100000],
+            [6400000,6700000,7000000,7300000,7600000,7900000,8200000],
+            [6500000,6800000,7100000,7400000,7700000,8000000,8300000]
+        ];
+        const PERGOLA_INSTALL_FEE = 1000000; // 시공비+운송료 100만원
+        const PERGOLA_MAX_PRICE = 8300000 + PERGOLA_INSTALL_FEE; // 최대 930만원
+        const DECK_PRICE_PER_M2 = 150000; // m²당 15만원
+        const GLASS_PRICE_PER_M = 500000; // m당 50만원
+        const GLASS_MAX_PRICE = 10000000; // 글라스 최대 1000만원
+
+        function findClosestIndex(arr, val) {
+            let closest = 0;
+            let minDiff = Math.abs(arr[0] - val);
+            for (let i = 1; i < arr.length; i++) {
+                const diff = Math.abs(arr[i] - val);
+                if (diff < minDiff) { minDiff = diff; closest = i; }
+            }
+            return closest;
+        }
+
+        function getPergolaPrice(widthM, heightM) {
+            const dim1 = Math.round(widthM * 1000);
+            const dim2 = Math.round(heightM * 1000);
+            // 작은 값 → Span, 큰 값 → Pivot
+            const spanMM = Math.min(dim1, dim2);
+            const pivotMM = Math.max(dim1, dim2);
+            // 최대 사이즈 초과 시 캡
+            if (spanMM > 4000 || pivotMM > 5925) {
+                return PERGOLA_MAX_PRICE;
+            }
+            // Span 최소 1000mm 미만이면 1000으로
+            const clampedSpan = Math.max(spanMM, 1000);
+            const clampedPivot = Math.max(pivotMM, 2600);
+            const pivotIdx = findClosestIndex(PERGOLA_PIVOTS, clampedPivot);
+            const spanIdx = findClosestIndex(PERGOLA_SPANS, clampedSpan);
+            return PERGOLA_PRICES[pivotIdx][spanIdx] + PERGOLA_INSTALL_FEE;
+        }
+
+        function getDeckPrice(widthM, heightM) {
+            const area = widthM * heightM;
+            return Math.round(area * DECK_PRICE_PER_M2);
+        }
+
+        function getGlassPrice(widthM, heightM) {
+            // 파고라 최대 사이즈로 캡핑하여 둘레 계산
+            const pergolaW = Math.min(widthM, 4);
+            const pergolaH = Math.min(heightM, 6);
+            const perimeter = (pergolaW + pergolaH) * 2;
+            const price = Math.round(perimeter * GLASS_PRICE_PER_M);
+            return Math.min(price, GLASS_MAX_PRICE);
+        }
+
         function calculateEstimation() {
-            let areaBasePrice = selectionData.sizeVal * 40;
-            let packagePrice = (selectionData.packageType === 'Pergola') ? 0 : (selectionData.packageType === 'Pergola + Deck') ? 300 : (selectionData.packageType === 'Pergola + Glass') ? 400 : 700;
-            const total = Math.round((packagePrice + areaBasePrice) / 10) * 10;
-            selectionData.price = total;
+            const w = selectionData.sizeWidth;
+            const h = selectionData.sizeHeight;
+            const pkg = selectionData.packageType;
+
+            let pergolaPrice = getPergolaPrice(w, h);
+            let deckPrice = 0;
+            let glassPrice = 0;
+
+            if (pkg === 'Pergola + Deck' || pkg === 'Full Build') {
+                deckPrice = getDeckPrice(w, h);
+            }
+            if (pkg === 'Pergola + Glass' || pkg === 'Full Build') {
+                glassPrice = getGlassPrice(w, h);
+            }
+
+            const totalWon = pergolaPrice + deckPrice + glassPrice;
+            const totalMan = Math.round(totalWon / 10000); // 원 → 만원
+            const roundedMan = Math.round(totalMan / 10) * 10; // 10만원 단위 반올림
+            selectionData.price = roundedMan;
 
             if (document.getElementById('summary-price')) {
                 document.getElementById('summary-space').innerHTML = selectionData.spaces.join('<br>');
                 document.getElementById('summary-size').textContent = selectionData.sizeStr;
                 document.getElementById('summary-package').textContent = selectionData.packageType;
                 document.getElementById('summary-region').textContent = `${selectionData.regionSido} ${selectionData.regionSigungu}`;
-                document.getElementById('summary-price').textContent = `약 ${total.toLocaleString()}만 원 ~`;
+                document.getElementById('summary-price').textContent = `약 ${roundedMan.toLocaleString()}만 원 ~`;
             }
         }
 
