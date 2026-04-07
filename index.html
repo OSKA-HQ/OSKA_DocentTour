@@ -749,22 +749,19 @@
 
             // Google Sheets 자동 저장 (날짜별 시트)
             const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbwyc6WDxtCR2xANRvV7uXx5x1YmY5_ksYj2ElDJh9dpwzSttMmiP6UkhGIKAsnrofcF/exec";
-            if (GOOGLE_SHEET_URL && !GOOGLE_SHEET_URL.includes('여기에')) {
-                fetch(GOOGLE_SHEET_URL, {
-                    method: 'POST', mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: name,
-                        phone: phone,
-                        region: `${sido} ${sigungu}`,
-                        seen_product: selectionData.seenProduct,
-                        spaces: selectionData.spaces.join(', '),
-                        size: selectionData.sizeStr,
-                        package_type: selectionData.packageType,
-                        estimated_price: selectionData.price
-                    })
-                }).catch(err => console.log('Google Sheets 저장 오류:', err));
-            }
+            fetch(GOOGLE_SHEET_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    name: name,
+                    phone: phone,
+                    region: `${sido} ${sigungu}`,
+                    seen_product: selectionData.seenProduct,
+                    spaces: selectionData.spaces.join(', '),
+                    size: selectionData.sizeStr,
+                    package_type: selectionData.packageType,
+                    estimated_price: selectionData.price
+                })
+            }).catch(err => console.log('Google Sheets 저장 오류:', err));
 
             try {
                 await emailjs.send('service_zeilhoa', 'template_wx1s7ok', templateParams);
