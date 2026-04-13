@@ -29,10 +29,7 @@
         messagingSenderId: "778732114280",
         appId: "1:778732114280:web:96e00aff42bdbff3bf06dd"
       });
-      window.__fbAuthReady = false;
-      firebase.auth().signInAnonymously()
-        .then(function() { window.__fbAuthReady = true; console.log('[FB] 인증 성공'); })
-        .catch(function(err) { alert('[DEBUG] Firebase 인증 실패: ' + err.code + ' / ' + err.message); });
+      firebase.auth().signInAnonymously();
       window.DOCENT_DB = firebase.firestore();
     </script>
     <style>
@@ -784,10 +781,8 @@
 
             // Firestore CRM 자동 저장
             try {
-              if (!window.DOCENT_DB) { alert('[DEBUG] DOCENT_DB가 undefined입니다!'); }
-              if (!firebase.auth().currentUser) { alert('[DEBUG] 인증 안됨! currentUser=null, authReady=' + window.__fbAuthReady); }
               const now = new Date();
-              var docRef = await window.DOCENT_DB.collection('crm_customers').add({
+              await window.DOCENT_DB.collection('crm_customers').add({
                 brand: '오스카',
                 date: now.toISOString().slice(0, 10),
                 year: now.getFullYear() + '년',
@@ -808,9 +803,8 @@
                 content: `[도슨트투어] 고객명: ${name} / 실물확인: ${selectionData.seenProduct} / 공간: ${selectionData.spaces.join(', ')} / 사이즈: ${selectionData.sizeStr} / 패키지: ${selectionData.packageType} / 견적: 약 ${selectionData.price.toLocaleString()}만원~`,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
               });
-              alert('[DEBUG] CRM 저장 성공! 문서ID: ' + docRef.id);
             } catch(e) {
-              alert('[DEBUG] CRM 저장 실패: ' + e.code + ' / ' + e.message);
+              console.log('Firestore CRM 저장 오류:', e);
             }
 
             try {
