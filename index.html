@@ -29,8 +29,13 @@
         messagingSenderId: "778732114280",
         appId: "1:778732114280:web:96e00aff42bdbff3bf06dd"
       });
-      firebase.auth().signInAnonymously();
+      window.__fbAuthReady = false;
       window.DOCENT_DB = firebase.firestore();
+      // 오프라인 캐시 비활성화 — 서버에 실제 저장된 경우만 성공 처리
+      window.DOCENT_DB.settings({ experimentalForceLongPolling: true });
+      firebase.auth().signInAnonymously()
+        .then(function() { window.__fbAuthReady = true; console.log('[FB] 인증 성공'); })
+        .catch(function(err) { console.error('[FB] 인증 실패:', err); });
     </script>
     <style>
         body {
@@ -781,8 +786,21 @@
 
             // Firestore CRM 자동 저장
             try {
+              // 인증 대기 (최대 5초)
+              if (!window.__fbAuthReady) {
+                await new Promise(function(resolve) {
+                  var waited = 0;
+                  var check = setInterval(function() {
+                    waited += 200;
+                    if (window.__fbAuthReady || waited >= 5000) { clearInterval(check); resolve(); }
+                  }, 200);
+                });
+              }
+              if (!firebase.auth().currentUser) {
+                await firebase.auth().signInAnonymously();
+              }
               const now = new Date();
-              await window.DOCENT_DB.collection('crm_customers').add({
+              const docRef = await window.DOCENT_DB.collection('crm_customers').add({
                 brand: '오스카',
                 date: now.toISOString().slice(0, 10),
                 year: now.getFullYear() + '년',
@@ -803,8 +821,11 @@
                 content: `[도슨트투어] 고객명: ${name} / 실물확인: ${selectionData.seenProduct} / 공간: ${selectionData.spaces.join(', ')} / 사이즈: ${selectionData.sizeStr} / 패키지: ${selectionData.packageType} / 견적: 약 ${selectionData.price.toLocaleString()}만원~`,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
               });
+              // 서버에 실제 저장 확인
+              var saved = await docRef.get();
+              console.log('[CRM] 저장 완료:', docRef.id, saved.exists ? '서버확인OK' : '서버미확인');
             } catch(e) {
-              console.log('Firestore CRM 저장 오류:', e);
+              console.error('[CRM] 저장 실패:', e.code, e.message);
             }
 
             try {
