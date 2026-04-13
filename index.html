@@ -16,6 +16,23 @@
     </script>
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <!-- Firebase SDK (Firestore CRM 연동) -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+      import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+      import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+      const app = initializeApp({
+        apiKey: "AIzaSyDs8IJANSBncJHcFFrF03pLM7JvEOppcY0",
+        authDomain: "oska-integrated-management.firebaseapp.com",
+        projectId: "oska-integrated-management",
+        storageBucket: "oska-integrated-management.firebasestorage.app",
+        messagingSenderId: "778732114280",
+        appId: "1:778732114280:web:96e00aff42bdbff3bf06dd"
+      });
+      const auth = getAuth(app);
+      signInAnonymously(auth);
+      window.DOCENT_DB = { db: getFirestore(app), collection, addDoc, serverTimestamp };
+    </script>
     <style>
         body {
             font-family: 'Noto Sans KR', sans-serif;
@@ -762,6 +779,35 @@
                     estimated_price: selectionData.price
                 })
             }).catch(err => console.log('Google Sheets 저장 오류:', err));
+
+            // Firestore CRM 자동 저장
+            try {
+              const { db, collection, addDoc, serverTimestamp } = window.DOCENT_DB;
+              const now = new Date();
+              await addDoc(collection(db, 'crm_customers'), {
+                brand: '오스카',
+                date: now.toISOString().slice(0, 10),
+                year: now.getFullYear() + '년',
+                month: (now.getMonth() + 1) + '월',
+                channel: '도슨트투어',
+                consent: '동의',
+                phone: phone,
+                email: '',
+                product: '파고라',
+                custType: '개인',
+                grade: '',
+                grade2: '',
+                province: sido,
+                district: sigungu,
+                address: '',
+                assignedBranch: '',
+                status: '미배정',
+                content: `[도슨트투어] 고객명: ${name} / 실물확인: ${selectionData.seenProduct} / 공간: ${selectionData.spaces.join(', ')} / 사이즈: ${selectionData.sizeStr} / 패키지: ${selectionData.packageType} / 견적: 약 ${selectionData.price.toLocaleString()}만원~`,
+                createdAt: serverTimestamp()
+              });
+            } catch(e) {
+              console.log('Firestore CRM 저장 오류:', e);
+            }
 
             try {
                 await emailjs.send('service_zeilhoa', 'template_wx1s7ok', templateParams);
