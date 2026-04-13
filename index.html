@@ -783,7 +783,14 @@
             // Firestore CRM 자동 저장 (SMR 연동)
             try {
                 const now = new Date();
+                // 현재 최대 no 조회 후 +1
+                const allSnap = await window.DOCENT_DB.collection('crm_customers').orderBy('no', 'desc').limit(1).get();
+                let newNo = 1;
+                if (!allSnap.empty) {
+                    newNo = (allSnap.docs[0].data().no || 0) + 1;
+                }
                 await window.DOCENT_DB.collection('crm_customers').add({
+                    no: newNo,
                     brand: '오스카',
                     date: now.toISOString().slice(0, 10),
                     year: now.getFullYear() + '년',
@@ -804,6 +811,7 @@
                     content: `[도슨트투어] 고객명: ${name} / 실물확인: ${selectionData.seenProduct} / 공간: ${selectionData.spaces.join(', ')} / 사이즈: ${selectionData.sizeStr} / 패키지: ${selectionData.packageType} / 견적: 약 ${selectionData.price.toLocaleString()}만원~`,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
+                console.log('[FB] CRM 저장 성공, no:', newNo);
             } catch(e) {
                 console.error('CRM 저장 오류:', e);
             }
