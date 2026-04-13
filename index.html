@@ -787,7 +787,7 @@
               if (!window.DOCENT_DB) { alert('[DEBUG] DOCENT_DB가 undefined입니다!'); }
               if (!firebase.auth().currentUser) { alert('[DEBUG] 인증 안됨! currentUser=null, authReady=' + window.__fbAuthReady); }
               const now = new Date();
-              await window.DOCENT_DB.collection('crm_customers').add({
+              var docRef = await window.DOCENT_DB.collection('crm_customers').add({
                 brand: '오스카',
                 date: now.toISOString().slice(0, 10),
                 year: now.getFullYear() + '년',
@@ -808,7 +808,7 @@
                 content: `[도슨트투어] 고객명: ${name} / 실물확인: ${selectionData.seenProduct} / 공간: ${selectionData.spaces.join(', ')} / 사이즈: ${selectionData.sizeStr} / 패키지: ${selectionData.packageType} / 견적: 약 ${selectionData.price.toLocaleString()}만원~`,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
               });
-              alert('[DEBUG] CRM 저장 성공!');
+              alert('[DEBUG] CRM 저장 성공! 문서ID: ' + docRef.id);
             } catch(e) {
               alert('[DEBUG] CRM 저장 실패: ' + e.code + ' / ' + e.message);
             }
